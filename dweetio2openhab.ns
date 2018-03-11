@@ -18,10 +18,7 @@ const LOGLEVEL_INFO = true;
 const LOGLEVEL_DEBUG = false;
 const LOGLEVEL_TRACE = false;
 
-const DEVICE_ID_TEMP_1 = 'b7ktt1l7rihma4b9eam0';
-
-console.log(ts() + " Starting listening for events from  " + DWEET_THING);
-
+console.log(ts() + " Starting listening for events from " + DWEET_THING);
 
 dweetio.listen_for(DWEET_THING, function (dweet) {
     let jsonData = dweet.content;
@@ -37,7 +34,7 @@ dweetio.listen_for(DWEET_THING, function (dweet) {
         console.log(ts + ', Device_id: ' + device_id + ", event_type: '" + dt_event_type + "' ");
     }
 
-    if ( device_id === DEVICE_ID_TEMP_1 && 'temperature' === dt_event_type ) {
+    if ( device_id === DT_DEVICE_ID_TEMP_1 && 'temperature' === dt_event_type ) {
         const temp = dt_event.data.temperature.value;
         if (LOGLEVEL_INFO) {
             const dt_time = dt_event.data.temperature.updateTime;
