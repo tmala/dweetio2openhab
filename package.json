@@ -1,0 +1,15 @@
+{
+  "name": "dweetio2openhab",
+  "version": "1.0.0",
+  "description": "listening for stream at dweetio, and updating openHAB",
+  "main": "listen.ns",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Tor Mala",
+  "license": "MIT",
+  "dependencies": {
+    "node-dweetio": "0.0.11",
+    "xmlhttprequest": "^1.8.0"
+  }
+}

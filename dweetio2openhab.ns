@@ -1,0 +1,111 @@
+/*
+
+Listens for a stream at dweet.io
+Updates an item at a openHAB-installation when dweets are received
+
+*/
+importScripts = require('./importscripts.js').importScripts;
+importScripts('./settings.ns');
+let XMLHttpRequest = require('xmlhttprequest').XMLHttpRequest;
+let util = require('util');
+
+let dweetClient = require('node-dweetio');
+let dweetio = new dweetClient();
+
+const LOGLEVEL_FATAL = true;
+const LOGLEVEL_ERROR = true;
+const LOGLEVEL_INFO = true;
+const LOGLEVEL_DEBUG = false;
+const LOGLEVEL_TRACE = false;
+
+const DEVICE_ID_TEMP_1 = 'b7ktt1l7rihma4b9eam0';
+
+console.log(ts() + " Starting listening for events from  " + DWEET_THING);
+
+
+dweetio.listen_for(DWEET_THING, function (dweet) {
+    let jsonData = dweet.content;
+    if (LOGLEVEL_TRACE) {
+        console.log( ts() + " jsonData: ", JSON.stringify(jsonData, null, 3) );
+    }
+    let dt_event = jsonData.event;
+    let dt_event_type = dt_event.eventType;
+    let device_id =  getDeviceId(dt_event.targetName);
+
+    if (LOGLEVEL_TRACE) {
+        const ts = dt_date2str_NO(dt_event.timestamp);
+        console.log(ts + ', Device_id: ' + device_id + ", event_type: '" + dt_event_type + "' ");
+    }
+
+    if ( device_id === DEVICE_ID_TEMP_1 && 'temperature' === dt_event_type ) {
+        const temp = dt_event.data.temperature.value;
+        if (LOGLEVEL_INFO) {
+            const dt_time = dt_event.data.temperature.updateTime;
+            console.log('at ' + dt_date2str_NO(dt_time) + ' temperature is set to ' + temp.toFixed(2) + '˚C');
+        }
+        sendCommand(OPENHAB_ITEM, temp.toFixed(2) + ' ˚C')
+    }
+
+});
+
+function sendCommand(itemId, command) {
+    let xhr_sendCommand = new XMLHttpRequest();
+    xhr_sendCommand.withCredentials = true;
+    xhr_sendCommand.addEventListener("readystatechange", function () {
+        if (this.readyState === this.DONE) {
+            if (this.status === 200) {
+                let res = this.responseText;
+                if (LOGLEVEL_TRACE) {
+                    console.log(ts() + " " + this.status +  " OK => Response: ", res);
+                }
+            } else {
+                let res = this.responseText;
+                if (LOGLEVEL_ERROR) {
+                    console.log(ts() + " " + this.status +  " " + this.statusText + " => Response: ", JSON.stringify(res, null, 2) );
+                }
+            }
+        }
+    });
+    xhr_sendCommand.open('POST', OPENHAB_URL + OPENHAB_ITEM);
+    xhr_sendCommand.setRequestHeader("accept", "application/json");
+    xhr_sendCommand.send(command);
+}
+
+function ts() {
+    let d = new Date();
+    return date2str_NO(d);
+}
+function date2str_NO(d) {
+    return fix2digit(d.getDate()) + '.' + fixMonth(d.getMonth()) + '.' + d.getFullYear() + ' ' +
+        fix2digit(d.getHours()) + ':' + fix2digit(d.getMinutes()) + ':' + fix2digit(d.getSeconds());
+}
+function dt_date2str_NO(strDate) {
+    if (util.isString(strDate)) {
+        return strDate.substr(8,2) + '.' +  strDate.substr(5,2) + '.' + strDate.substr(0,4) + ' ' +
+            strDate.substr(11,10) + strDate.substr(29,1);
+    } else {
+        return strDate;
+    }
+}
+function fixMonth(num) {
+    let month = num + 1;
+    if (month < 10) {
+        return '0' + month;
+    } else {
+        return '' + month;
+    }
+}
+function fix2digit(num) {
+    if (num < 10) {
+        return '0' + num;
+    } else {
+        return '' + num;
+    }
+}
+
+function getDeviceId(deviceUrl) {
+    let replaceMe = "projects/" + DT_PROJECT_ID + "/devices/";
+    return deviceUrl.replace(replaceMe, "");
+}
+
+
