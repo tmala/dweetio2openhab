@@ -18,6 +18,9 @@ const LOGLEVEL_INFO = true;
 const LOGLEVEL_DEBUG = false;
 const LOGLEVEL_TRACE = false;
 
+const OPENHAB_ITEM_1_TEMP = 'SoveromTemp';
+const OPENHAB_ITEM_1_UPDATED = 'SoveromTempUpdated';
+
 console.log(ts() + " Starting listening for events from " + DWEET_THING);
 
 dweetio.listen_for(DWEET_THING, function (dweet) {
@@ -36,15 +39,23 @@ dweetio.listen_for(DWEET_THING, function (dweet) {
 
     if ( device_id === DT_DEVICE_ID_TEMP_1 && 'temperature' === dt_event_type ) {
         const temp = dt_event.data.temperature.value;
+        const dt_time = dt_event.data.temperature.updateTime;
+        const no_time = toLocaleTime(dt_time);
         if (LOGLEVEL_INFO) {
-            const dt_time = dt_event.data.temperature.updateTime;
-            console.log('at ' + dt_date2str_NO(dt_time) + ' temperature is set to ' + temp.toFixed(2) + '˚C');
+            console.log(no_time + ' temperature is set to ' + temp.toFixed(2) + '˚C');
         }
-        sendCommand(OPENHAB_ITEM, temp.toFixed(2) + ' ˚C')
+        sendCommand(OPENHAB_ITEM_1_TEMP, temp.toFixed(2) + ' ˚C')
+        sendCommand(OPENHAB_ITEM_1_UPDATED, no_time)
     }
 
 });
 
+/**
+ * Sends a command to update an openHAB Item
+ *
+ * @param itemId
+ * @param command
+ */
 function sendCommand(itemId, command) {
     let xhr_sendCommand = new XMLHttpRequest();
     xhr_sendCommand.withCredentials = true;
@@ -63,26 +74,37 @@ function sendCommand(itemId, command) {
             }
         }
     });
-    xhr_sendCommand.open('POST', OPENHAB_URL + OPENHAB_ITEM);
+    xhr_sendCommand.open('POST', OPENHAB_URL + itemId);
     xhr_sendCommand.setRequestHeader("accept", "application/json");
     xhr_sendCommand.send(command);
 }
 
+/***********************************************************
+ * Some DATETIME-related functions
+ ***********************************************************
+ */
 function ts() {
     let d = new Date();
     return date2str_NO(d);
 }
+function toLocaleTime(dt) {
+    if (dt === null || dt.length < 10) {
+        return dt;
+    }
+    if (dt.indexOf('Z') < 1) {
+        return dt;
+    }
+    let datetime = Date.parse(dt);
+    let d = new Date(datetime);
+    let str = fix2digit(d.getDate()) + '.' + fixMonth(d.getMonth()) + '.' + d.getFullYear() + ' ' +
+        fix2digit(d.getHours()) + ':' +
+        fix2digit(d.getMinutes()) + ':' +
+        fix2digit(d.getSeconds());
+    return str;
+}
 function date2str_NO(d) {
     return fix2digit(d.getDate()) + '.' + fixMonth(d.getMonth()) + '.' + d.getFullYear() + ' ' +
         fix2digit(d.getHours()) + ':' + fix2digit(d.getMinutes()) + ':' + fix2digit(d.getSeconds());
-}
-function dt_date2str_NO(strDate) {
-    if (util.isString(strDate)) {
-        return strDate.substr(8,2) + '.' +  strDate.substr(5,2) + '.' + strDate.substr(0,4) + ' ' +
-            strDate.substr(11,10) + strDate.substr(29,1);
-    } else {
-        return strDate;
-    }
 }
 function fixMonth(num) {
     let month = num + 1;
@@ -100,9 +122,14 @@ function fix2digit(num) {
     }
 }
 
+/**
+ * Extracts the DEVICE_ID from the targetname-parameter
+ *
+ * @param deviceUrl
+ * @returns {string | void}
+ */
 function getDeviceId(deviceUrl) {
     let replaceMe = "projects/" + DT_PROJECT_ID + "/devices/";
     return deviceUrl.replace(replaceMe, "");
 }
-
 
