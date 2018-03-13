@@ -1,5 +1,9 @@
 {
   "name": "dweetio2openhab",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tmala/dweetio2openhab.git"
+  },
   "version": "1.0.0",
   "description": "listening for stream at dweetio, and updating openHAB",
   "main": "listen.ns",
