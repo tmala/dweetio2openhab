@@ -6,46 +6,42 @@ Updates an item at a openHAB-installation when dweets are received
 */
 importScripts = require('./importscripts.js').importScripts;
 importScripts('./settings.ns');
+importScripts('./myLog.ns');
+importScripts('./myTime.ns');
 let XMLHttpRequest = require('xmlhttprequest').XMLHttpRequest;
-let util = require('util');
-
 let dweetClient = require('node-dweetio');
 let dweetio = new dweetClient();
 
-const LOGLEVEL_FATAL = true;
-const LOGLEVEL_ERROR = true;
-const LOGLEVEL_INFO = true;
-const LOGLEVEL_DEBUG = false;
-const LOGLEVEL_TRACE = false;
+setCurrentLogLevel(LOGLEVEL_DEBUG);
 
 const OPENHAB_ITEM_1_TEMP = 'SoveromTemp';
 const OPENHAB_ITEM_1_UPDATED = 'SoveromTempUpdated';
 
-console.log(ts() + " Starting listening for events from " + DWEET_THING);
+console.log(myTime_ts() + " Starting listening for events from " + DWEET_THING);
 
 dweetio.listen_for(DWEET_THING, function (dweet) {
     let jsonData = dweet.content;
-    if (LOGLEVEL_TRACE) {
-        console.log( ts() + " jsonData: ", JSON.stringify(jsonData, null, 3) );
+    if (isTrace()) {
+        console.log( myTime_ts() + " jsonData: ", JSON.stringify(jsonData, null, 3) );
     }
     let dt_event = jsonData.event;
     let dt_event_type = dt_event.eventType;
     let device_id =  getDeviceId(dt_event.targetName);
 
-    if (LOGLEVEL_TRACE) {
-        const ts = dt_date2str_NO(dt_event.timestamp);
+    if (isTrace()) {
+        const ts = myTime_toLocaleTime(dt_event.timestamp);
         console.log(ts + ', Device_id: ' + device_id + ", event_type: '" + dt_event_type + "' ");
     }
 
     if ( device_id === DT_DEVICE_ID_TEMP_1 && 'temperature' === dt_event_type ) {
         const temp = dt_event.data.temperature.value;
         const dt_time = dt_event.data.temperature.updateTime;
-        const no_time = toLocaleTime(dt_time);
-        if (LOGLEVEL_INFO) {
+        const no_time = myTime_toLocaleTime(dt_time);
+        if (isInfo()) {
             console.log(no_time + ' temperature is set to ' + temp.toFixed(2) + '˚C');
         }
-        sendCommand(OPENHAB_ITEM_1_TEMP, temp.toFixed(2) + ' ˚C')
-        sendCommand(OPENHAB_ITEM_1_UPDATED, no_time)
+        sendCommand(OPENHAB_ITEM_1_TEMP, temp.toFixed(2) + ' ˚C');
+        sendCommand(OPENHAB_ITEM_1_UPDATED, no_time);
     }
 
 });
@@ -63,13 +59,13 @@ function sendCommand(itemId, command) {
         if (this.readyState === this.DONE) {
             if (this.status === 200) {
                 let res = this.responseText;
-                if (LOGLEVEL_TRACE) {
-                    console.log(ts() + " " + this.status +  " OK => Response: ", res);
+                if (isTrace()) {
+                    console.log(myTime_ts() + " " + this.status +  " OK => Response: ", res);
                 }
             } else {
                 let res = this.responseText;
-                if (LOGLEVEL_ERROR) {
-                    console.log(ts() + " " + this.status +  " " + this.statusText + " => Response: ", JSON.stringify(res, null, 2) );
+                if (isError()) {
+                    console.log(myTime_ts() + " " + this.status +  " " + this.statusText + " => Response: ", JSON.stringify(res, null, 2) );
                 }
             }
         }
@@ -79,48 +75,6 @@ function sendCommand(itemId, command) {
     xhr_sendCommand.send(command);
 }
 
-/***********************************************************
- * Some DATETIME-related functions
- ***********************************************************
- */
-function ts() {
-    let d = new Date();
-    return date2str_NO(d);
-}
-function toLocaleTime(dt) {
-    if (dt === null || dt.length < 10) {
-        return dt;
-    }
-    if (dt.indexOf('Z') < 1) {
-        return dt;
-    }
-    let datetime = Date.parse(dt);
-    let d = new Date(datetime);
-    let str = fix2digit(d.getDate()) + '.' + fixMonth(d.getMonth()) + '.' + d.getFullYear() + ' ' +
-        fix2digit(d.getHours()) + ':' +
-        fix2digit(d.getMinutes()) + ':' +
-        fix2digit(d.getSeconds());
-    return str;
-}
-function date2str_NO(d) {
-    return fix2digit(d.getDate()) + '.' + fixMonth(d.getMonth()) + '.' + d.getFullYear() + ' ' +
-        fix2digit(d.getHours()) + ':' + fix2digit(d.getMinutes()) + ':' + fix2digit(d.getSeconds());
-}
-function fixMonth(num) {
-    let month = num + 1;
-    if (month < 10) {
-        return '0' + month;
-    } else {
-        return '' + month;
-    }
-}
-function fix2digit(num) {
-    if (num < 10) {
-        return '0' + num;
-    } else {
-        return '' + num;
-    }
-}
 
 /**
  * Extracts the DEVICE_ID from the targetname-parameter
@@ -129,7 +83,8 @@ function fix2digit(num) {
  * @returns {string | void}
  */
 function getDeviceId(deviceUrl) {
-    let replaceMe = "projects/" + DT_PROJECT_ID + "/devices/";
-    return deviceUrl.replace(replaceMe, "");
+    let posDevices = deviceUrl.indexOf("/devices");
+    posDevices += "/devices/".length;
+    return deviceUrl.substr(posDevices);
 }
 

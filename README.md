@@ -40,6 +40,5 @@ filename: settings.ns
 ```
 const DWEET_THING = '<name of your thing at dweet.io>';
 const OPENHAB_URL = '<url to your local openHAB-installations REST API>';
-const DT_PROJECT_ID = '<your project id from DT Studio>';
 const DT_DEVICE_ID_TEMP_1 = '<the device_id for your temperature sensor>';
 ```
