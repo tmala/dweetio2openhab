@@ -17,6 +17,13 @@ setCurrentLogLevel(LOGLEVEL_DEBUG);
 const OPENHAB_ITEM_1_TEMP = 'SoveromTemp';
 const OPENHAB_ITEM_1_UPDATED = 'SoveromTempUpdated';
 
+const OPENHAB_ITEM_2_PROXIMITY = 'KontoretDoor';
+const OPENHAB_ITEM_2_UPDATED = 'KontoretDoorUpdated';
+
+const OPENHAB_ITEM_3_PROXIMITY = 'WCDoor';
+const OPENHAB_ITEM_3_UPDATED = 'WCDoorUpdated';
+
+
 console.log(myTime_ts() + " Starting listening for events from " + DWEET_THING);
 
 dweetio.listen_for(DWEET_THING, function (dweet) {
@@ -43,6 +50,29 @@ dweetio.listen_for(DWEET_THING, function (dweet) {
         sendCommand(OPENHAB_ITEM_1_TEMP, temp.toFixed(2) + ' ˚C');
         sendCommand(OPENHAB_ITEM_1_UPDATED, no_time);
     }
+
+    if ( device_id === DT_DEVICE_ID_PROXIMITY_2 && 'objectPresent' === dt_event_type ) {
+        const status = dt_event.data.objectPresent.state === 'PRESENT' ? 'Lukket' : 'Åpen';
+        const dt_time = dt_event.data.objectPresent.updateTime;
+        const no_time = myTime_toLocaleTime(dt_time);
+        if (isInfo()) {
+            console.log(no_time + ' objectpresent is set to ' + status);
+        }
+        sendCommand(OPENHAB_ITEM_2_PROXIMITY, status);
+        sendCommand(OPENHAB_ITEM_2_UPDATED, no_time);
+    }
+
+    if ( device_id === DT_DEVICE_ID_PROXIMITY_3 && 'objectPresent' === dt_event_type ) {
+        const status = dt_event.data.objectPresent.state === 'PRESENT' ? 'Opptatt' : 'Ledig';
+        const dt_time = dt_event.data.objectPresent.updateTime;
+        const no_time = myTime_toLocaleTime(dt_time);
+        if (isInfo()) {
+            console.log(no_time + ' objectpresent is set to ' + status);
+        }
+        sendCommand(OPENHAB_ITEM_3_PROXIMITY, status);
+        sendCommand(OPENHAB_ITEM_3_UPDATED, no_time);
+    }
+
 
 });
 
