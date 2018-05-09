@@ -26,6 +26,9 @@ const OPENHAB_ITEM_3_UPDATED = 'WCDoorUpdated';
 const OPENHAB_ITEM_4_TEMP = 'BodTemp';
 const OPENHAB_ITEM_4_UPDATED = 'BodTempUpdated';
 
+const OPENHAB_ITEM_5_TEMP = 'LoftTemp';
+const OPENHAB_ITEM_5_UPDATED = 'LoftTempUpdated';
+
 
 console.log(myTime_ts() + " Starting listening for events from " + DWEET_THING);
 
@@ -48,7 +51,7 @@ dweetio.listen_for(DWEET_THING, function (dweet) {
         const dt_time = dt_event.data.temperature.updateTime;
         const no_time = myTime_toLocaleTime(dt_time);
         if (isInfo()) {
-            console.log(no_time + ' temperature [' +DT_DEVICE_ID_TEMP_1 + ' - ' + OPENHAB_ITEM_1_TEMP + '] is set to ' + temp.toFixed(2) + '˚C');
+            console.log(no_time + ' temperature [' + DT_DEVICE_ID_TEMP_1 + ' - ' + OPENHAB_ITEM_1_TEMP + '] is set to ' + temp.toFixed(2) + '˚C');
         }
         sendCommand(OPENHAB_ITEM_1_TEMP, temp.toFixed(2) + ' ˚C');
         sendCommand(OPENHAB_ITEM_1_UPDATED, no_time);
@@ -85,6 +88,17 @@ dweetio.listen_for(DWEET_THING, function (dweet) {
         }
         sendCommand(OPENHAB_ITEM_4_TEMP, temp.toFixed(2) + ' ˚C');
         sendCommand(OPENHAB_ITEM_4_UPDATED, no_time);
+    }
+
+    if ( device_id === DT_DEVICE_ID_TEMP_5 && 'temperature' === dt_event_type ) {
+        const temp = dt_event.data.temperature.value;
+        const dt_time = dt_event.data.temperature.updateTime;
+        const no_time = myTime_toLocaleTime(dt_time);
+        if (isInfo()) {
+            console.log(no_time + ' temperature [' + DT_DEVICE_ID_TEMP_5 + ' - ' + OPENHAB_ITEM_5_TEMP + '] is set to ' + temp.toFixed(2) + '˚C');
+        }
+        sendCommand(OPENHAB_ITEM_5_TEMP, temp.toFixed(2) + ' ˚C');
+        sendCommand(OPENHAB_ITEM_5_UPDATED, no_time);
     }
 
 
